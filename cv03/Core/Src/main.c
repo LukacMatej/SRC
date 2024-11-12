@@ -62,6 +62,11 @@ const osThreadAttr_t LD2Task_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for LD3Timer */
+osTimerId_t LD3TimerHandle;
+const osTimerAttr_t LD3Timer_attributes = {
+  .name = "LD3Timer"
+};
 /* Definitions for LD1Semaphore */
 osSemaphoreId_t LD1SemaphoreHandle;
 const osSemaphoreAttr_t LD1Semaphore_attributes = {
@@ -85,6 +90,7 @@ static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_TIM7_Init(void);
 void StartLD1Task(void *argument);
 void StartLD2Task(void *argument);
+void LD3TimerCallback(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -129,7 +135,7 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_Base_Start_IT(&htim7);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -150,8 +156,13 @@ int main(void)
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* creation of LD3Timer */
+  LD3TimerHandle = osTimerNew(LD3TimerCallback, osTimerPeriodic, NULL, &LD3Timer_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+  osTimerStart(LD3TimerHandle, 1500);
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -518,9 +529,18 @@ void StartLD2Task(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  osSemaphoreAcquire(LD2SemaphoreHandle);
+
   }
   /* USER CODE END StartLD2Task */
+}
+
+/* LD3TimerCallback function */
+void LD3TimerCallback(void *argument)
+{
+  /* USER CODE BEGIN LD3TimerCallback */
+	HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+  /* USER CODE END LD3TimerCallback */
 }
 
 /**
@@ -540,7 +560,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  if (htim->Instance == TIM7) {
+	  osSemaphoreRelease(LD2SemaphoreHandle);
+    }
   /* USER CODE END Callback 1 */
 }
 
