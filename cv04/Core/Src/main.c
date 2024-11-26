@@ -628,15 +628,14 @@ void HAL_ADC_ConvCpltCallback (ADC_HandleTypeDef * hadc) {
   * @retval None
   */
 /* USER CODE END Header_StartFiltrace */
+#define N 10
 void StartFiltrace(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  const int N = 10; // Délka okna pro klouzavý průměr
-  uint32_t buffer[N] = {0}; // Kruhový buffer pro N vzorků
+  uint32_t x; // Proměnná pro aktuální vzorek
+  uint32_t buffer[N] = {0}; // Kruhový buffer pro N vzorků, inicializován na 0
   int index = 0; // Index pro přístup do bufferu
   uint32_t sum = 0; // Součet všech prvků v bufferu
-  uint32_t ADCData = 0; // Hodnota z ADC
-  uint32_t y = 0; // Výstup klouzavého průměru
 
   /* Infinite loop */
   for (;;)
@@ -660,6 +659,7 @@ void StartFiltrace(void *argument)
   }
   /* USER CODE END 5 */
 }
+
 
 
 /**
