@@ -253,3 +253,130 @@ Finished building: default.size.stdout
  
 Finished building: cv04.list
  
+14:35:41 **** Build of configuration Debug for project cv04 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L4R5xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "cv04.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\mates\STM32CubeIDE\workspace_1.16.1\SRC\cv04\STM32L4R5ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="cv04.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: cv04.elf
+ 
+arm-none-eabi-size  cv04.elf 
+arm-none-eabi-objdump -h -S cv04.elf  > "cv04.list"
+   text	   data	    bss	    dec	    hex	filename
+  42384	     96	  10368	  52848	   ce70	cv04.elf
+Finished building: default.size.stdout
+ 
+Finished building: cv04.list
+ 
+15:39:07 **** Incremental Build of configuration Debug for project cv04 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L4R5xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'StartFiltrace':
+../Core/Src/main.c:686:5: warning: implicit declaration of function 'QueueOverwrite' [-Wimplicit-function-declaration]
+  686 |     QueueOverwrite(FrontaHandle,sum);
+      |     ^~~~~~~~~~~~~~
+../Core/Src/main.c: In function 'StartRegulace':
+../Core/Src/main.c:711:11: error: 'ControlError' undeclared (first use in this function)
+  711 |           ControlError=SetPoint-ControlledVariable;
+      |           ^~~~~~~~~~~~
+../Core/Src/main.c:711:11: note: each undeclared identifier is reported only once for each function it appears in
+../Core/Src/main.c:721:11: error: 'Ti' undeclared (first use in this function)
+  721 |           Ti=2;//2s
+      |           ^~
+../Core/Src/main.c:722:11: error: 'Tsampling' undeclared (first use in this function)
+  722 |           Tsampling=0.02;
+      |           ^~~~~~~~~
+../Core/Src/main.c:723:11: error: 'Pterm' undeclared (first use in this function)
+  723 |           Pterm=PropGain*ControlError;
+      |           ^~~~~
+../Core/Src/main.c:723:17: error: 'PropGain' undeclared (first use in this function)
+  723 |           Pterm=PropGain*ControlError;
+      |                 ^~~~~~~~
+../Core/Src/main.c:724:11: error: 'Iterm' undeclared (first use in this function)
+  724 |           Iterm=Ipast+0.5*PropGain*Tsampling*(ControlError+Epast)/Ti;
+      |           ^~~~~
+../Core/Src/main.c:726:11: error: 'ManipulatedVariable' undeclared (first use in this function)
+  726 |           ManipulatedVariable=Pterm+Iterm;
+      |           ^~~~~~~~~~~~~~~~~~~
+../Core/Src/main.c:727:35: error: 'Umax' undeclared (first use in this function)
+  727 |           if (ManipulatedVariable>Umax) {
+      |                                   ^~~~
+../Core/Src/main.c:731:35: error: 'Umin' undeclared (first use in this function)
+  731 |           if (ManipulatedVariable<Umin) {
+      |                                   ^~~~
+make: *** [Core/Src/subdir.mk:40: Core/Src/main.o] Error 1
+"make -j12 all" terminated with exit code 2. Build might be incomplete.
+15:41:29 **** Incremental Build of configuration Debug for project cv04 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L4R5xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'StartFiltrace':
+../Core/Src/main.c:686:5: warning: implicit declaration of function 'QueueOverwrite' [-Wimplicit-function-declaration]
+  686 |     QueueOverwrite(FrontaHandle,sum);
+      |     ^~~~~~~~~~~~~~
+../Core/Src/main.c: In function 'StartRegulace':
+../Core/Src/main.c:733:11: error: 'ManipulatedVariable' undeclared (first use in this function)
+  733 |           ManipulatedVariable=Pterm+Iterm;
+      |           ^~~~~~~~~~~~~~~~~~~
+../Core/Src/main.c:733:11: note: each undeclared identifier is reported only once for each function it appears in
+../Core/Src/main.c:734:35: error: 'Umax' undeclared (first use in this function)
+  734 |           if (ManipulatedVariable>Umax) {
+      |                                   ^~~~
+../Core/Src/main.c:738:35: error: 'Umin' undeclared (first use in this function)
+  738 |           if (ManipulatedVariable<Umin) {
+      |                                   ^~~~
+make: *** [Core/Src/subdir.mk:40: Core/Src/main.o] Error 1
+"make -j12 all" terminated with exit code 2. Build might be incomplete.
+15:42:46 **** Incremental Build of configuration Debug for project cv04 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L4R5xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'StartFiltrace':
+../Core/Src/main.c:686:5: warning: implicit declaration of function 'QueueOverwrite' [-Wimplicit-function-declaration]
+  686 |     QueueOverwrite(FrontaHandle,sum);
+      |     ^~~~~~~~~~~~~~
+arm-none-eabi-gcc -o "cv04.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\mates\STM32CubeIDE\workspace_1.16.1\SRC\cv04\STM32L4R5ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="cv04.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+C:/ST/STM32CubeIDE_1.16.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.12.3.rel1.win32_1.0.200.202406191623/tools/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld.exe: ./Core/Src/main.o: in function `StartFiltrace':
+C:/Users/mates/STM32CubeIDE/workspace_1.16.1/SRC/cv04/Debug/../Core/Src/main.c:686: undefined reference to `QueueOverwrite'
+collect2.exe: error: ld returned 1 exit status
+make: *** [makefile:68: cv04.elf] Error 1
+"make -j12 all" terminated with exit code 2. Build might be incomplete.
+15:47:09 **** Incremental Build of configuration Debug for project cv04 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L4R5xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "cv04.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\mates\STM32CubeIDE\workspace_1.16.1\SRC\cv04\STM32L4R5ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="cv04.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: cv04.elf
+ 
+arm-none-eabi-size  cv04.elf 
+arm-none-eabi-objdump -h -S cv04.elf  > "cv04.list"
+   text	   data	    bss	    dec	    hex	filename
+  45444	    100	  10388	  55932	   da7c	cv04.elf
+Finished building: default.size.stdout
+ 
+Finished building: cv04.list
+ 
+15:57:46 **** Incremental Build of configuration Debug for project cv04 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L4R5xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "cv04.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\mates\STM32CubeIDE\workspace_1.16.1\SRC\cv04\STM32L4R5ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="cv04.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: cv04.elf
+ 
+arm-none-eabi-size  cv04.elf 
+arm-none-eabi-objdump -h -S cv04.elf  > "cv04.list"
+   text	   data	    bss	    dec	    hex	filename
+  45508	    100	  10400	  56008	   dac8	cv04.elf
+Finished building: default.size.stdout
+ 
+Finished building: cv04.list
+ 
+15:59:01 **** Incremental Build of configuration Debug for project cv04 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L4R5xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "cv04.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\mates\STM32CubeIDE\workspace_1.16.1\SRC\cv04\STM32L4R5ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="cv04.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: cv04.elf
+ 
+arm-none-eabi-size  cv04.elf 
+arm-none-eabi-objdump -h -S cv04.elf  > "cv04.list"
+   text	   data	    bss	    dec	    hex	filename
+  45492	    100	  10400	  55992	   dab8	cv04.elf
+Finished building: default.size.stdout
+ 
+Finished building: cv04.list
+ 

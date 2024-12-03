@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "queue.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -42,7 +43,12 @@ uint32_t FilterOutput=0;
 uint32_t k = 0;
 uint32_t N = 10;
 uint32_t ADCInput = 0;
+uint32_t SetPoint = 500;
+double ControlledVariable = 0;
+double DAC_OUTPUT = 0;
+double RPM = 0;
 #define N 30
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -65,10 +71,27 @@ const osThreadAttr_t Filtrace_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for Regulace */
+osThreadId_t RegulaceHandle;
+const osThreadAttr_t Regulace_attributes = {
+  .name = "Regulace",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for Fronta */
+osMessageQueueId_t FrontaHandle;
+const osMessageQueueAttr_t Fronta_attributes = {
+  .name = "Fronta"
+};
 /* Definitions for Semaphore1 */
 osSemaphoreId_t Semaphore1Handle;
 const osSemaphoreAttr_t Semaphore1_attributes = {
   .name = "Semaphore1"
+};
+/* Definitions for RegulationSemaphore */
+osSemaphoreId_t RegulationSemaphoreHandle;
+const osSemaphoreAttr_t RegulationSemaphore_attributes = {
+  .name = "RegulationSemaphore"
 };
 /* USER CODE BEGIN PV */
 
@@ -85,6 +108,7 @@ static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_DAC1_Init(void);
 void StartFiltrace(void *argument);
+void StartRegulace(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -133,9 +157,10 @@ int main(void)
   MX_DAC1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim7);
   HAL_ADC_Start_IT(&hadc1);
   HAL_DAC_Start(&hdac1, DAC1_CHANNEL_1);
-  HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1, DAC_ALIGN_12B_R, 2048);
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -149,6 +174,9 @@ int main(void)
   /* creation of Semaphore1 */
   Semaphore1Handle = osSemaphoreNew(1, 0, &Semaphore1_attributes);
 
+  /* creation of RegulationSemaphore */
+  RegulationSemaphoreHandle = osSemaphoreNew(1, 0, &RegulationSemaphore_attributes);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -157,6 +185,10 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of Fronta */
+  FrontaHandle = osMessageQueueNew (1, sizeof(uint32_t), &Fronta_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -164,6 +196,9 @@ int main(void)
   /* Create the thread(s) */
   /* creation of Filtrace */
   FiltraceHandle = osThreadNew(StartFiltrace, NULL, &Filtrace_attributes);
+
+  /* creation of Regulace */
+  RegulaceHandle = osThreadNew(StartRegulace, NULL, &Regulace_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -501,7 +536,7 @@ static void MX_TIM7_Init(void)
 
   /* USER CODE END TIM7_Init 1 */
   htim7.Instance = TIM7;
-  htim7.Init.Prescaler = 6000-1;
+  htim7.Init.Prescaler = 240-1;
   htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim7.Init.Period = 10000-1;
   htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -638,7 +673,6 @@ void StartFiltrace(void *argument)
   uint32_t buffer[N] = {0}; // Kruhový buffer pro N vzorků, inicializován na 0
   int index = 0; // Index pro přístup do bufferu
   uint32_t sum = 0; // Součet všech prvků v bufferu
-
   /* Infinite loop */
   for (;;)
   {
@@ -649,13 +683,63 @@ void StartFiltrace(void *argument)
     sum += ADCInput;
 
     index = (index + 1) % N;
-
+    xQueueOverwrite(FrontaHandle,&sum);
     FilterOutput = sum / N;
     //HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1, DAC_ALIGN_12B_R, DACOut);
 
     osSemaphoreAcquire(Semaphore1Handle, osWaitForever);
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartRegulace */
+/**
+* @brief Function implementing the Regulace thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartRegulace */
+void StartRegulace(void *argument)
+{
+  /* USER CODE BEGIN StartRegulace */
+  /* Infinite loop */
+	double ControlError;
+	double Ti;
+	double Tsampling;
+	double Pterm;
+	double PropGain = 1;
+	double Iterm;
+	uint32_t ManipulatedVariable;
+	uint32_t Umin = 0;
+	uint32_t Umax = 4096;
+	double Epast=0,  Ipast=0;
+	Tsampling=0.02;
+  for(;;)
+  {
+	  osSemaphoreAcquire(RegulationSemaphoreHandle, osWaitForever);
+	  osMessageQueueGet(FrontaHandle, &ControlledVariable, NULL, 2000);
+	  ControlledVariable=ControlledVariable/N;
+	  RPM=1400*ControlledVariable/1700.0;
+	  ControlError=SetPoint-RPM;
+	  Pterm=PropGain*ControlError;
+	  Iterm=Ipast+0.5*PropGain*Tsampling*(ControlError+Epast)/Ti;
+
+	  ManipulatedVariable=Pterm+Iterm;
+	  if (ManipulatedVariable>Umax) {
+	  	ManipulatedVariable=Umax;
+	  	Iterm=Ipast;
+	  }
+	  if (ManipulatedVariable<Umin) {
+	  	ManipulatedVariable=Umin;
+	  	Iterm=Ipast;
+	  }
+	  DAC_OUTPUT=ManipulatedVariable;
+	  HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1, DAC_ALIGN_12B_R, ManipulatedVariable);
+	  Ipast=Iterm;
+	  Epast=ControlError;
+
+  }
+  /* USER CODE END StartRegulace */
 }
 
 /**
@@ -676,6 +760,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
   /* USER CODE BEGIN Callback 1 */
 	if (htim==&htim3){
+	}
+	if (htim==&htim7){
+		osSemaphoreRelease(RegulationSemaphoreHandle);
 	}
   /* USER CODE END Callback 1 */
 }
