@@ -6,8 +6,10 @@
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
-		<item key="selection" value="ADC"/>
+		<item key="selection" value="MutexStat"/>
 		<list key="findhistory">
+			<item value="MutexStat"/>
+			<item value="Ti"/>
 			<item value="ADC"/>
 			<item value="Semaphore"/>
 		</list>
