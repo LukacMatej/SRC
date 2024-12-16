@@ -56,7 +56,6 @@ uint32_t FilterOutput=0;
 uint32_t k = 0;
 uint32_t N = 10;
 uint32_t ADCInput = 0;
-uint32_t SetPoint = 500;
 double ControlledVariable = 0;
 double DAC_OUTPUT = 0;
 double RPM = 0;
@@ -815,6 +814,7 @@ void StartRegulace(void *argument)
 	Tsampling=0.02;
 	uint32_t StartTime;
 	osStatus_t MutexStat;
+	uint32_t SetPoint;
   for(;;)
   {
 	  osSemaphoreAcquire(RegulationSemaphoreHandle, osWaitForever);
