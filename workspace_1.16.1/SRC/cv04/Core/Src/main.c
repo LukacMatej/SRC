@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "queue.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -45,29 +46,30 @@ struct DataCom{
 	double PropGain;
 	double IntegralTimeConstant;
 } ControlData;
-double GlobalIntergralTimeConstant;
-double GlobalPropGain;
-double GlobalControlError;
-double GlobalManipulatedVariable;
-double GlobalControlledVariable;
-double GlobalSetpoint;
+double GlobalIntergralTimeConstant=2;
+double GlobalPropGain=1;
+double GlobalControlError=0;
+double GlobalManipulatedVariable=0;
+double GlobalControlledVariable=0;
+double GlobalSetpoint=0;
 uint32_t ExecTime=0;
 uint32_t FilterOutput=0;
 uint32_t k = 0;
-uint32_t N = 10;
+uint32_t N = 20;
 uint32_t ADCInput = 0;
-double ControlledVariable = 0;
 double DAC_OUTPUT = 0;
 double RPM = 0;
-double Setpoint;
-double ControlledVariable;
-double ManipulatedVariable;
-double ControlError;
-double PropGain;
-double IntegralTimeConstant;
+double Setpoint = 0;
+double ControlledVariable = 0;
+uint32_t FiltrData = 0;
+double ManipulatedVariable = 0;
+double ControlError = 0;
+double PropGain = 1;
+double IntegralTimeConstant = 2;
 uint32_t CommunicationExecutionTime;
 uint32_t ControlExecutionTime;
-#define N 30
+
+#define N 20
 
 /* USER CODE END PM */
 
@@ -111,6 +113,11 @@ osMessageQueueId_t FrontaHandle;
 const osMessageQueueAttr_t Fronta_attributes = {
   .name = "Fronta"
 };
+/* Definitions for myTimer01 */
+osTimerId_t myTimer01Handle;
+const osTimerAttr_t myTimer01_attributes = {
+  .name = "myTimer01"
+};
 /* Definitions for CommunicationMutex */
 osMutexId_t CommunicationMutexHandle;
 const osMutexAttr_t CommunicationMutex_attributes = {
@@ -149,6 +156,7 @@ static void MX_TIM4_Init(void);
 void StartFiltrace(void *argument);
 void StartRegulace(void *argument);
 void StartCommunication(void *argument);
+void Callback01(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -197,6 +205,12 @@ int main(void)
   MX_DAC1_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+  ControlData.ControlError=0;
+  ControlData.ControlledVariable=0;
+  ControlData.IntegralTimeConstant=1;
+  ControlData.ManipulatedVariable=0;
+  ControlData.PropGain=2;
+  ControlData.Setpoint=0;
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim4);
   HAL_TIM_Base_Start_IT(&htim7);
@@ -229,8 +243,13 @@ int main(void)
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* creation of myTimer01 */
+  myTimer01Handle = osTimerNew(Callback01, osTimerPeriodic, NULL, &myTimer01_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+  osTimerStart(myTimer01Handle, 500);
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
@@ -801,60 +820,51 @@ void StartRegulace(void *argument)
 {
   /* USER CODE BEGIN StartRegulace */
   /* Infinite loop */
-	double ControlError;
-	double Ti;
-	double Tsampling;
 	double Pterm;
-	double PropGain;
 	double Iterm;
-	uint32_t ManipulatedVariable;
 	uint32_t Umin = 0;
-	uint32_t Umax = 4096;
+	uint32_t Umax = 4095;
 	double Epast=0,  Ipast=0;
-	Tsampling=0.02;
+	double Tsampling=0.02;
+	double Ti=2;
 	uint32_t StartTime;
 	osStatus_t MutexStat;
-	uint32_t SetPoint;
   for(;;)
   {
 	  osSemaphoreAcquire(RegulationSemaphoreHandle, osWaitForever);
+	  StartTime = TIM3->CNT;
 	  MutexStat=osMutexAcquire(CommunicationMutexHandle, 200);
 	  if (MutexStat==osOK){
-		  StartTime = TIM3->CNT;
-
 		  Ti = ControlData.IntegralTimeConstant;
 		  PropGain = ControlData.PropGain;
-		  SetPoint = ControlData.Setpoint;
-
-	  	  osMessageQueueGet(FrontaHandle, &ControlledVariable, NULL, 2000);
-	  	  ControlledVariable=ControlledVariable/N;
-	  	  RPM=1400*ControlledVariable/1700.0;
-	  	  ControlError=SetPoint-RPM;
-	  	  Pterm=PropGain*ControlError;
-	  	  Iterm=Ipast+0.5*PropGain*Tsampling*(ControlError+Epast)/Ti;
-
-	  	  ManipulatedVariable=Pterm+Iterm;
-
-	  	  if (ManipulatedVariable>Umax) {
-	  		  ManipulatedVariable=Umax;
-	  		  Iterm=Ipast;
-	  	  }
-	  	  if (ManipulatedVariable<Umin) {
-	  		  ManipulatedVariable=Umin;
-	  		  Iterm=Ipast;
-	  	  }
-	  	  DAC_OUTPUT=ManipulatedVariable;
-	  	  HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1, DAC_ALIGN_12B_R, ManipulatedVariable);
-	  	  Ipast=Iterm;
-	  	  Epast=ControlError;
-
+		  Setpoint = ControlData.Setpoint;
+	  }
+	  osMessageQueueGet(FrontaHandle, &FiltrData, NULL, 2);
+	  ControlledVariable=FiltrData*1.0/(N*1.0);
+	  RPM=1400*ControlledVariable/1700.0;
+	  ControlError=Setpoint-RPM;
+	  Pterm=PropGain*ControlError;
+	  Iterm=Ipast+0.5*PropGain*Tsampling*(ControlError+Epast)/Ti;
+  	  ManipulatedVariable=Pterm+Iterm;
+  	  if (ManipulatedVariable>Umax) {
+  		  ManipulatedVariable=Umax;
+  		  Iterm=Ipast;
+  	  }
+  	  if (ManipulatedVariable<Umin) {
+  		  ManipulatedVariable=Umin;
+  		  Iterm=Ipast;
+  	  }
+  	  DAC_OUTPUT=ManipulatedVariable;
+  	  HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1, DAC_ALIGN_12B_R, ManipulatedVariable);
+  	  Ipast=Iterm;
+  	  Epast=ControlError;
+	  if (MutexStat==osOK){
 	  	  ControlData.ManipulatedVariable = ManipulatedVariable;
 	  	  ControlData.ControlError = ControlError;
-	  	  ControlData.ControlledVariable = ControlledVariable;
-
-	  	  ControlExecutionTime = TIM3->CNT - StartTime;
+	  	  ControlData.ControlledVariable = RPM;
+		  osMutexRelease(CommunicationMutexHandle);
 	  }
-	  osMutexRelease(CommunicationMutexHandle);
+  	  ControlExecutionTime = TIM3->CNT - StartTime;
   }
   /* USER CODE END StartRegulace */
 }
@@ -870,25 +880,32 @@ void StartCommunication(void *argument)
 {
   /* USER CODE BEGIN StartCommunication */
   /* Infinite loop */
-  uint32_t StartTime;
-  osStatus_t MutexStat;
-  for(;;)
-  {
-	  osSemaphoreAcquire(CommunicationSemaphoreHandle, osWaitForever);
-	  StartTime = TIM3->CNT;
-	  MutexStat=osMutexAcquire(CommunicationMutexHandle, 200);
-	  if (MutexStat==osOK){
-		ControlData.Setpoint = GlobalSetpoint;
-		ControlData.PropGain = GlobalPropGain;
-		ControlData.IntegralTimeConstant = GlobalIntergralTimeConstant;
-		GlobalControlError = ControlData.ControlError;
-		GlobalControlledVariable = ControlData.ControlledVariable;
-		GlobalManipulatedVariable = ControlData.ManipulatedVariable;
-	  }
-	  CommunicationExecutionTime = TIM3->CNT - StartTime;
-	  osMutexRelease(CommunicationMutexHandle);
-  }
+
   /* USER CODE END StartCommunication */
+}
+
+/* Callback01 function */
+void Callback01(void *argument)
+{
+  /* USER CODE BEGIN Callback01 */
+	  uint32_t StartTime;
+	  osStatus_t MutexStat;
+	  for(;;)
+	  {
+		  StartTime = TIM3->CNT;
+		  MutexStat=osMutexAcquire(CommunicationMutexHandle, 200);
+		  if (MutexStat==osOK){
+			ControlData.Setpoint = GlobalSetpoint;
+			ControlData.PropGain = GlobalPropGain;
+			ControlData.IntegralTimeConstant = GlobalIntergralTimeConstant;
+			GlobalControlError = ControlData.ControlError;
+			GlobalControlledVariable = ControlData.ControlledVariable;
+			GlobalManipulatedVariable = ControlData.ManipulatedVariable;
+		  }
+		  CommunicationExecutionTime = TIM3->CNT - StartTime;
+		  osMutexRelease(CommunicationMutexHandle);
+	  }
+  /* USER CODE END Callback01 */
 }
 
 /**
